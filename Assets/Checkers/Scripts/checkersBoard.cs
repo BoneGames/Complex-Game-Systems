@@ -199,10 +199,14 @@ namespace Checkers
                     // Move it back to original (start)
                     MovePiece(selectedPiece, x1, y1);
                 }
+
+                EndTurn();
             }
         }
 
-        private bool OutOfBounds(int x, int y)
+
+        // checks if given co-ords are outside of board
+        private bool OutOfBounds(int x, int y) 
         {
             return x < 0 || x >= 8 || y < 0 || y >= 8;
         }
@@ -214,22 +218,105 @@ namespace Checkers
             int x2 = (int)end.x;
             int y2 = (int)end.y;
 
-            // Is the start the same as the end?
+            // RULE #1: Is the start the same as the end?
             if (start == end)
             {
                 // You can move back where you were
                 return true;
             }
 
-            // If you are moving on top of another piece
+            // RULE #2: If you are moving on top of another piece
             if (pieces[x2, y2])
             {
                 // YA CAN'T DO DAT!
                 return false;
             }
 
+            // RULE #3: MOVING DIAGONAL FORWARDS OR BACKWARDS?
+            int startCombined = int.Parse((x1.ToString() + y1.ToString()));
+            int endCombined = int.Parse((x2.ToString() + y2.ToString()));
+
+            int diagLeft = 9; // end - start = this when black moves diagonal left
+            int diagRight = -11; // end - start = this when black moves diagonal right
+
+            if (selectedPiece.isWhite) // reverse diagonal values for opposite direction
+            {
+                diagLeft = -9;
+                diagRight = 11;
+            } 
+
+
+            //bool diagLef = sele
+           // do the bool set condition that is in CheckForKing() for the diag left and right
+
+
+            if(selectedPiece.isKing) // reverse diagonal values for opposite direction
+            {
+                diagLeft *= -1;
+                diagRight *= -1;
+            }
+
+            if ((endCombined - startCombined) == (diagRight*2) || (endCombined - startCombined) == (diagLeft*2)) // if not moving forward
+            {
+                // Get the piece in between move
+                Piece pieceBetween = GetPieceBetween(start, end);
+                // If there is a piece between AND the piece isn't the same color
+                if (pieceBetween == null || pieceBetween.isWhite == selectedPiece.isWhite)
+                {
+                    return false;
+                }
+                RemovePiece(pieceBetween);
+            }
+
+            else if ((endCombined - startCombined) != diagRight && (endCombined - startCombined) != diagLeft) // if not moving forward
+            {
+                return false;
+            }          
+
             // Yeah... Alright, you can do dat.
             return true;
+        }
+
+        //calculates piece coordinates of in between piece
+        private Piece GetPieceBetween(Vector2 start, Vector2 end)
+        {
+            int xIndex = (int)(start.x + end.x) / 2;
+            int yindex = (int)(start.y + end.y) / 2;
+            return pieces[xIndex, yindex];
+        }
+
+        private void RemovePiece(Piece pieceToRemove)
+        {
+            // Remove it from the array
+            pieces[pieceToRemove.x, pieceToRemove.y] = null;
+            // Destroy the gameobject of the piece immediately
+            DestroyImmediate(pieceToRemove.gameObject);
+        }
+
+        private void EndTurn()
+        {
+            // Check if a piece needs to be kinged
+            CheckForKing();
+        }
+
+        void CheckForKing()
+        {
+            // Get the end drag locations
+            int x = (int)endDrag.x;
+            int y = (int)endDrag.y;
+            // Check if the selected piece is not kinged
+            if (!selectedPiece.isKing)
+            {
+                bool whiteNeedsKing = selectedPiece.isWhite && y == 7;
+                bool blackNeedsKing = !selectedPiece.isWhite && y == 0;
+                // If the selected piece is white and reached the end of the board
+                if (whiteNeedsKing || blackNeedsKing)
+                {
+                    // The selected piece is kinged!
+                    selectedPiece.isKing = true;
+                    // Run animations
+                }
+            }
         }
     }
 }

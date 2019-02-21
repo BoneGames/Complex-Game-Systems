@@ -97,3 +97,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isWhite: 0
   isKing: 0
+  x: 0
+  y: 0
