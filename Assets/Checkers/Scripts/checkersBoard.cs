@@ -33,10 +33,11 @@ namespace Checkers
         }
         private void Update()
         {
+            StartTurn(); // {TEST}
             // Update the mouse over information
             MouseOver();
             // Is it currently white's turn?
-            if (isWhiteTurn)
+            if (isWhiteTurn) // for switching turns on network
             {
                 // Get x and y coordinate of selected mouse over
                 int x = (int)mouseOver.x;
@@ -108,7 +109,7 @@ namespace Checkers
         private Piece SelectPiece(int x, int y) // Selects a piece on the 2D grid and returns it
         {
             // Check if X and Y is out of bounds
-            if (OutOfBounds(x, y))
+            if (InBounds(x, y))
                 // Return result early
                 return null;
 
@@ -181,7 +182,7 @@ namespace Checkers
             if (selectedPiece)
             {
                 // Check if desired location is Out of Bounds
-                if (OutOfBounds(x2, y2))
+                if (InBounds(x2, y2))
                 {
                     // Move it back to original (start)
                     MovePiece(selectedPiece, x1, y1);
@@ -193,6 +194,7 @@ namespace Checkers
                 {
                     //  Replace end coordinates with our selected piece
                     MovePiece(selectedPiece, x2, y2);
+                    CheckForKing();
                 }
                 else
                 {
@@ -206,7 +208,7 @@ namespace Checkers
 
 
         // checks if given co-ords are outside of board
-        private bool OutOfBounds(int x, int y) 
+        private bool InBounds(int x, int y) 
         {
             return x < 0 || x >= 8 || y < 0 || y >= 8;
         }
@@ -248,7 +250,7 @@ namespace Checkers
 
             //bool diagLef = sele
            // do the bool set condition that is in CheckForKing() for the diag left and right
-
+           
 
             if(selectedPiece.isKing) // reverse diagonal values for opposite direction
             {
@@ -296,8 +298,18 @@ namespace Checkers
         private void EndTurn()
         {
             // Check if a piece needs to be kinged
-            CheckForKing();
+        
         }
+
+        private void StartTurn()
+        {
+            List<Piece> forcedPieces = GetPossibleMoves();
+            if(forcedPieces.Count != 0)
+            {
+                print("forced");
+            }
+        }
+
 
         void CheckForKing()
         {
@@ -313,10 +325,71 @@ namespace Checkers
                 if (whiteNeedsKing || blackNeedsKing)
                 {
                     // The selected piece is kinged!
-                    selectedPiece.isKing = true;
+                    selectedPiece.King();
                     // Run animations
                 }
             }
+        }
+
+        public bool IsForcedMove(Piece piece) // check if forced Capture for a given piece
+        {
+            int yCheck = -1;
+            if(piece.isWhite || (!piece.isWhite && piece.isKing))
+            {
+                yCheck *= -1;
+            }
+
+                for (int xCheck = -1; xCheck <= 1; xCheck+=2)
+                {
+                        int x1 = piece.x + xCheck;
+                        int y1 = piece.y + yCheck;
+
+                        if(InBounds(x1,y1))
+                        {
+                            continue;
+                        }
+
+                        Piece detectedPiece = pieces[x1, y1];
+                        if(detectedPiece != null && detectedPiece.isWhite != piece.isWhite)
+                        {
+                            int x2 = x1 + xCheck;
+                            int y2 = y1 + yCheck;
+                            if (InBounds(x2, y2))
+                            {
+                                continue;
+                            }
+                            Piece destinationCell = pieces[x2, y2];
+                            if(destinationCell == null)
+                            {
+                                return true;
+                            }
+                        }
+                    
+                }
+            
+            return false;
+        }
+
+        public List<Piece> GetPossibleMoves()
+        {
+            List<Piece> forcedPieces = new List<Piece>();
+
+            // Check the entire board
+            for (int x = 0; x < 8; x++)
+            {
+                for (int y = 0; y < 8; y++)
+                {
+                    Piece pieceToCheck = pieces[x, y];
+                    if(pieceToCheck != null)
+                    {
+                        if (IsForcedMove(pieceToCheck))
+                        {
+                            forcedPieces.Add(pieceToCheck);
+                        }
+                    }
+                }
+            }
+            return forcedPieces;
         }
     }
 }
