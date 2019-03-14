@@ -339,7 +339,7 @@ namespace Checkers
                 yCheck *= -1;
             }
 
-                for (int xCheck = -1; xCheck <= 1; xCheck+=2)
+                for (int xCheck = -1; xCheck <= 1; xCheck += 2)
                 {
                         int x1 = piece.x + xCheck;
                         int y1 = piece.y + yCheck;
